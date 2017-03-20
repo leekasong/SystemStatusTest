@@ -33,4 +33,3 @@ public:
 	void			getNETStatus(LONG *adapTotalByte, size_t adaptorCount);  
 
  };
- 

@@ -157,6 +157,64 @@ void CSystemStatusTestDlg::OnTimer(UINT_PTR nIDEvent)
 		m_strEditOutput += tmpLog;
 	}
 	//-----------------------------------------------------------------------
+	//배터리 관련 정보
+	//https://msdn.microsoft.com/en-us/library/windows/desktop/aa373232(v=vs.85).aspx
+	SYSTEM_POWER_STATUS power_status = { 0 };
+	if (GetSystemPowerStatus(&power_status)) {
+
+		if (power_status.BatteryFlag != 128) { //128 == No system battery
+			if (power_status.ACLineStatus == 1)
+				tmpLog.Format(TEXT("전원 연결중\r\n"));
+			else
+				tmpLog.Format(TEXT("배터리 사용중\r\n"));
+			m_strEditOutput += tmpLog;
+
+			tmpLog.Format(TEXT("배터리 충전률: %d%%\r\n"), power_status.BatteryLifePercent);
+			m_strEditOutput += tmpLog;
+
+			if (power_status.BatteryLifeTime != -1){
+				int min = power_status.BatteryLifeTime / 60;
+				if (min > 60)
+					tmpLog.Format(TEXT("남은시간: %d시간 %d분\r\n"), min / 60, min % 60);
+				else
+					tmpLog.Format(TEXT("남은시간: %d분\r\n"), min);
+			}
+			else
+				tmpLog.Format(TEXT("남은시간 계산중...\r\n"));
+			m_strEditOutput += tmpLog;
+		}
+		else {
+			tmpLog.Format(TEXT("No Battery\r\n"));
+			m_strEditOutput += tmpLog;
+		}
+	}
+	//-----------------------------------------------------------------------
+	//하드디스크 
+	DWORD dwDrive = GetLogicalDrives();
+	DWORD dwDriveCh = 0x0001;
+	TCHAR DriveText[3] = { 0 };
+
+	for (TCHAR Drive = 'A'; Drive <= 'Z'; Drive++){
+		wsprintf(DriveText, TEXT("%C:"), Drive);
+		UINT type = GetDriveType(DriveText);
+		if ((dwDrive & dwDriveCh) && (type == DRIVE_REMOVABLE || type == DRIVE_FIXED || type == DRIVE_RAMDISK)){
+			// 하드용량			
+			ULARGE_INTEGER i64FreeBytesToCaller = { 0 }, i64TotalBytes = { 0 }, i64FreeBytes = { 0 };
+			BOOL bRsult = GetDiskFreeSpaceEx(DriveText, (PULARGE_INTEGER)&i64FreeBytesToCaller, (PULARGE_INTEGER)&i64TotalBytes, (PULARGE_INTEGER)&i64FreeBytes);
+			if (bRsult){
+				float ra = 1.0f - (float)(int)(i64FreeBytes.QuadPart >> 20) / (float)(int)(i64TotalBytes.QuadPart >> 20);
+				tmpLog.Format(TEXT("%c: %I64d MB / %I64d MB(%d%%)\r\n"), Drive, i64FreeBytes.QuadPart >> 20, i64TotalBytes.QuadPart >> 20, (int)(ra * 100));
+				m_strEditOutput += tmpLog;
+			}
+		}
+		dwDriveCh <<= 1;
+	}
+	//-----------------------------------------------------------------------
+
+		
+	
+
+
 	UpdateData(FALSE);
 	CDialogEx::OnTimer(nIDEvent);
 }
