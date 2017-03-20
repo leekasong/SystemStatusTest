@@ -3,3 +3,8 @@
 ################################################################################
 
 /ipch
+/SystemStatusTest/x64/Debug
+/x64/Debug
+/SystemStatusTest.VC.VC.opendb
+/SystemStatusTest.VC.db
+/.vs/SystemStatusTest/v14
